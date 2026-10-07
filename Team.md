@@ -8,10 +8,11 @@
 - MarketPulse Team: T3M
 
 ## Members
-
+| **Name** | **github username** |
 | Lacoste Matthieu | matthcab |
 | Labbe Matthieu | matthieulbb |
 | Mayeul Bonnaud | OxR0n |
+| Mathieu Caron | mathieucaronn |
 
 
 ## Repository
