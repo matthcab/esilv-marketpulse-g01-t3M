@@ -36,6 +36,13 @@ def main():
     instrument_prices = filter_prices(prices, instrument["ticker"])
     benchmark_prices = filter_prices(prices, benchmark["ticker"])
 
+    # TD02 Partie 4 - vérification temporaire du filtrage (à supprimer ensuite)
+    print(len(instrument_prices))
+    print(len(benchmark_prices))
+    print(instrument_prices[0])
+    print(benchmark_prices[0])
+    print()
+
     instrument_latest = instrument_prices[-1]
     benchmark_latest = benchmark_prices[-1]
 
