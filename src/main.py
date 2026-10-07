@@ -30,8 +30,21 @@ def main():
     instruments = load_instruments()
     prices = load_prices()
 
+    print(type(prices))
+    print(prices[0]["close"])
+    print(type(prices[0]["close"]))
+    
+
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
+
+    print(instrument["ticker"])
+    print(instrument["name"])
+    print(instrument["currency"])
+
+    print(benchmark["ticker"])
+    print(benchmark["name"])
+
 
     instrument_prices = filter_prices(prices, instrument["ticker"])
     benchmark_prices = filter_prices(prices, benchmark["ticker"])
