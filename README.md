@@ -188,11 +188,13 @@ present many times
 
 ## Canonical runtime
 
-Terminal:
+To run the terminal application, open a terminal at the root of the repository, the folder containing this README, `src/` and `data/`. MarketPulse reads its sample files from `data/sample/` relative to that folder.
 
 ```bash
 python src/main.py
 ```
+
+If your shell cannot find `python`, use `python3 src/main.py`. The starter run needs only Python 3 and its standard library. A successful run starts with `=== MarketPulse ===` and shows summaries for AAPL and the S&P 500.
 
 Dashboard, introduced in TD11:
 
