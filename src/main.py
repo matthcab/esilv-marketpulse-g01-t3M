@@ -2,7 +2,6 @@ from pathlib import Path
 import csv
 import json
 
-
 DATA_DIR = Path("data/sample")
 
 # These starter values mirror config/settings.yml.
@@ -51,8 +50,6 @@ def display_market_summary(asset, prices, show_currency=True):
         print(f"First close  : {first_close:.2f}")
         print(f"Last close   : {last_close:.2f}")
 
-    
-    
 
 def main():
     instruments = load_instruments()
