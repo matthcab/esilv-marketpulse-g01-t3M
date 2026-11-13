@@ -48,6 +48,7 @@ def display_market_summary(asset, prices, show_currency=True):
     print(f"First close  : {first_close:.2f}{unit}")
     print(f"Last close   : {last_close:.2f}{unit}")
 
+
 def main():
     instruments = load_instruments()
     prices = load_prices()
