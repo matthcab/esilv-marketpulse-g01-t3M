@@ -25,6 +25,14 @@ def load_prices():
 def filter_prices(prices, ticker):
     return [row for row in prices if row["ticker"] == ticker]
 
+def get_first_close(prices):
+    first_row = prices[0]
+    return float(first_row["close"])
+
+
+def get_last_close(prices):
+    last_row = prices[-1]
+    return float(last_row["close"])
 
 def get_first_date(prices):
     return prices[0]["date"]
@@ -33,44 +41,44 @@ def get_first_date(prices):
 def get_last_date(prices):
     return prices[-1]["date"]
 
+def display_market_summary(asset, prices, show_currency=True):
+    first_close = get_first_close(prices)
+    last_close = get_last_close(prices)
+
+    if show_currency:
+        unit = " " + asset["currency"]
+    else:
+        unit = ""
+
+    print(f"{asset['ticker']} - {asset['name']}")
+    print(f"Observations : {len(prices)}")
+    print(f"First date   : {get_first_date(prices)}")
+    print(f"Last date    : {get_last_date(prices)}")
+    print(f"First close  : {first_close:.2f}{unit}")
+    print(f"Last close   : {last_close:.2f}{unit}")
+
 
 def main():
     instruments = load_instruments()
     prices = load_prices()
-
+    
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
     instrument_prices = filter_prices(prices, instrument["ticker"])
     benchmark_prices = filter_prices(prices, benchmark["ticker"])
 
-    instrument_latest = instrument_prices[-1]
-    benchmark_latest = benchmark_prices[-1]
-    instrument_first_date = get_first_date(instrument_prices)
-    instrument_last_date = get_last_date(instrument_prices)
-    benchmark_first_date = get_first_date(benchmark_prices)
-    benchmark_last_date = get_last_date(benchmark_prices)
-
     print("=== MarketPulse ===")
     print()
+    print("Market configuration")
+    print(f"Period   : {LOOKBACK_LABEL}")
+    print(f"Interval : {INTERVAL_LABEL}")
+    print()
     print("Instrument")
-    print(f"{instrument['ticker']} - {instrument['name']}")
-    print(f"Observations : {len(instrument_prices)}")
-    print(f"First date   : {instrument_first_date}")
-    print(f"Last date    : {instrument_last_date}")
-    print(f"First close  : {instrument_prices[0]['close']} {instrument['currency']}")
-    print(f"Last close   : {instrument_latest['close']} {instrument['currency']}")
+    display_market_summary(instrument, instrument_prices)
     print()
     print("Benchmark")
-    print(f"{benchmark['ticker']} - {benchmark['name']}")
-    print(f"Observations : {len(benchmark_prices)}")
-    print(f"First date   : {benchmark_first_date}")
-    print(f"Last date    : {benchmark_last_date}")
-    print(f"First close  : {benchmark_prices[0]['close']}")
-    print(f"Last close   : {benchmark_latest['close']}")
-    print()
-    print(f"Period: {LOOKBACK_LABEL}")
-    print(f"Interval: {INTERVAL_LABEL}")
+    display_market_summary(benchmark, benchmark_prices, show_currency=False)
 
 
 if __name__ == "__main__":
