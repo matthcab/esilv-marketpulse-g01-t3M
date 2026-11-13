@@ -26,29 +26,7 @@ def filter_prices(prices, ticker):
     return [row for row in prices if row["ticker"] == ticker]
 
 
-def main():
-    instruments = load_instruments()
-    prices = load_prices()
-
-    print(type(prices))
-    print(prices[0]["close"])
-    print(type(prices[0]["close"]))
-    
-
-    instrument = instruments["instrument"]
-    benchmark = instruments["benchmark"]
-
-    print(instrument["ticker"])
-    print(instrument["name"])
-    print(instrument["currency"])
-
-    print(benchmark["ticker"])
-    print(benchmark["name"])
-
-
-    instrument_prices = filter_prices(prices, instrument["ticker"])
-    benchmark_prices = filter_prices(prices, benchmark["ticker"])
-
+def print_market_summary(instrument, benchmark, instrument_prices, benchmark_prices):
     instrument_latest = instrument_prices[-1]
     benchmark_latest = benchmark_prices[-1]
 
@@ -68,6 +46,19 @@ def main():
     print("Observations")
     print(f"{instrument['ticker']}: {len(instrument_prices)}")
     print(f"{benchmark['ticker']}: {len(benchmark_prices)}")
+
+
+def main():
+    instruments = load_instruments()
+    prices = load_prices()
+
+    instrument = instruments["instrument"]
+    benchmark = instruments["benchmark"]
+
+    instrument_prices = filter_prices(prices, instrument["ticker"])
+    benchmark_prices = filter_prices(prices, benchmark["ticker"])
+
+    print_market_summary(instrument, benchmark, instrument_prices, benchmark_prices)
 
 
 if __name__ == "__main__":
