@@ -51,6 +51,8 @@ def display_market_summary(asset, prices, show_currency=True):
         unit = ""
 
     print(f"{asset['ticker']} - {asset['name']}")
+    print(f"Market       : {asset['market']}")
+    print(f"Currency     : {asset['currency']}")
     print(f"Observations : {len(prices)}")
     print(f"First date   : {get_first_date(prices)}")
     print(f"Last date    : {get_last_date(prices)}")
