@@ -1,6 +1,7 @@
 from pathlib import Path
 import csv
 import json
+from providers.yahoo_provider import fetch_yahoo_prices
 
 from analytics import (
     align_series,
@@ -17,7 +18,7 @@ DATA_DIR = Path("data/sample")
 # Parsing YAML is optional and is not required by the 18-hour lab sequence.
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
-PROVIDER_LABEL = "CSV"
+PROVIDER_LABEL = "Yahoo Finance via yfinance"
 
 
 def load_instruments():
@@ -82,13 +83,11 @@ def display_market_summary(asset, prices, show_currency=True):
 
 def main():
     instruments = load_instruments()
-    prices = load_prices()
-    
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices = filter_prices(prices, instrument["ticker"])
-    benchmark_prices = filter_prices(prices, benchmark["ticker"])
+    instrument_prices = fetch_yahoo_prices(instrument["ticker"])
+    benchmark_prices = fetch_yahoo_prices(benchmark["ticker"])
 
     instrument_prices, benchmark_prices = align_series(
         instrument_prices, benchmark_prices
