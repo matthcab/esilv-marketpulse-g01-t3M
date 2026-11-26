@@ -8,6 +8,7 @@ from analytics import (
     calculate_period_return,
     calculate_relative_performance,
 )
+from providers.yahoo_provider import fetch_yahoo_prices
 
 DATA_DIR = Path("data/sample")
 
