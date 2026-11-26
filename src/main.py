@@ -8,6 +8,7 @@ from analytics import (
     calculate_period_return,
     calculate_relative_performance,
 )
+from providers.yahoo_provider import YAHOO_SYMBOLS, fetch_yahoo_prices
 
 DATA_DIR = Path("data/sample")
 
@@ -16,7 +17,11 @@ DATA_DIR = Path("data/sample")
 # Parsing YAML is optional and is not required by the 18-hour lab sequence.
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
-PROVIDER_LABEL = "CSV"
+PROVIDER_LABEL = "Yahoo Finance via yfinance"
+
+# Yahoo Finance equivalents of the lookback and interval above.
+YAHOO_PERIOD = "1mo"
+YAHOO_INTERVAL = "1d"
 
 def normalize_price_row(row):
     return {
@@ -33,18 +38,6 @@ def normalize_price_row(row):
 def load_instruments():
     with open(DATA_DIR / "instruments.json", encoding="utf-8") as file:
         return json.load(file)
-
-
-def normalize_price_row(row):
-    return {
-        "date": row["date"],
-        "ticker": row["ticker"],
-        "open": float(row["open"]),
-        "high": float(row["high"]),
-        "low": float(row["low"]),
-        "close": float(row["close"]),
-        "volume": int(row["volume"]),
-    }
 
 
 def load_prices():
@@ -92,15 +85,22 @@ def display_market_summary(asset, prices, show_currency=True):
 
 def main():
     instruments = load_instruments()
-    prices = load_prices()
-    prices = [normalize_price_row(row) for row in prices]
- 
-    
+
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices = filter_prices(prices, instrument["ticker"])
-    benchmark_prices = filter_prices(prices, benchmark["ticker"])
+    instrument_prices = fetch_yahoo_prices(
+        symbol=YAHOO_SYMBOLS[instrument["ticker"]],
+        canonical_ticker=instrument["ticker"],
+        period=YAHOO_PERIOD,
+        interval=YAHOO_INTERVAL,
+    )
+    benchmark_prices = fetch_yahoo_prices(
+        symbol=YAHOO_SYMBOLS[benchmark["ticker"]],
+        canonical_ticker=benchmark["ticker"],
+        period=YAHOO_PERIOD,
+        interval=YAHOO_INTERVAL,
+    )
 
     instrument_prices, benchmark_prices = align_series(
         instrument_prices,
@@ -134,7 +134,10 @@ def main():
 
     print()
     print("Relative performance")
-    print(f"{relative_performance:+.2f} percentage points")
+    print(
+        f"{instrument['ticker']} vs {benchmark['ticker']} : "
+        f"{relative_performance:+.2f} percentage points"
+    )
 
     instrument_base_100 = calculate_base_100(instrument_prices)
     benchmark_base_100 = calculate_base_100(benchmark_prices)
