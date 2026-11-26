@@ -1,7 +1,7 @@
 from pathlib import Path
 import csv
 import json
-
+from providers.yahoo_provider import fetch_yahoo_prices
 from analytics import (
     align_series,
     calculate_base_100,
@@ -18,24 +18,11 @@ DATA_DIR = Path("data/sample")
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
 PROVIDER_LABEL = "Yahoo Finance via yfinance"
-YAHOO_PERIOD = "1mo"
-YAHOO_INTERVAL = "1d"
-
 YAHOO_SYMBOLS = {
     "AAPL": "AAPL",
     "SP500": "^GSPC",
 }
 
-def normalize_price_row(row):
-    return {
-        "date": row["date"],
-        "ticker": row["ticker"],
-        "open": float(row["open"]),
-        "high": float(row["high"]),
-        "low": float(row["low"]),
-        "close": float(row["close"]),
-        "volume": int(row["volume"]),
-    }
 
 
 def load_instruments():
@@ -100,26 +87,31 @@ def display_market_summary(asset, prices, show_currency=True):
 
 def main():
     instruments = load_instruments()
+
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
     instrument_prices = fetch_yahoo_prices(
-        symbol=YAHOO_SYMBOLS[instrument["ticker"]],
-        canonical_ticker=instrument["ticker"],
-        period=YAHOO_PERIOD,
-        interval=YAHOO_INTERVAL,
+        symbol=YAHOO_SYMBOLS["AAPL"],
+        canonical_ticker="AAPL",
+        period="1mo",
+        interval="1d",
     )
+
     benchmark_prices = fetch_yahoo_prices(
-        symbol=YAHOO_SYMBOLS[benchmark["ticker"]],
-        canonical_ticker=benchmark["ticker"],
-        period=YAHOO_PERIOD,
-        interval=YAHOO_INTERVAL,
+        symbol=YAHOO_SYMBOLS["SP500"],
+        canonical_ticker="SP500",
+        period="1mo",
+        interval="1d",
     )
 
     instrument_prices, benchmark_prices = align_series(
         instrument_prices,
         benchmark_prices,
     )
+    if not instrument_prices:
+        print("No common dates for the instrument and benchmark.")
+        return
 
     instrument_return = calculate_period_return(instrument_prices)
     benchmark_return = calculate_period_return(benchmark_prices)
