@@ -2,6 +2,13 @@ from pathlib import Path
 import csv
 import json
 
+from analytics import (
+    align_series,
+    calculate_base_100,
+    calculate_period_return,
+    calculate_relative_performance,
+)
+
 
 DATA_DIR = Path("data/sample")
 
@@ -18,9 +25,21 @@ def load_instruments():
         return json.load(file)
 
 
+def normalize_price_row(row):
+    return {
+        "date": row["date"],
+        "ticker": row["ticker"],
+        "open": float(row["open"]),
+        "high": float(row["high"]),
+        "low": float(row["low"]),
+        "close": float(row["close"]),
+        "volume": int(row["volume"]),
+    }
+
+
 def load_prices():
     with open(DATA_DIR / "prices.csv", encoding="utf-8") as file:
-        return list(csv.DictReader(file))
+        return [normalize_price_row(row) for row in csv.DictReader(file)]
 
 
 def filter_prices(prices, ticker):
@@ -71,6 +90,23 @@ def main():
     instrument_prices = filter_prices(prices, instrument["ticker"])
     benchmark_prices = filter_prices(prices, benchmark["ticker"])
 
+    instrument_prices, benchmark_prices = align_series(
+        instrument_prices, benchmark_prices
+    )
+
+    if not instrument_prices:
+        print("No common dates for the instrument and benchmark.")
+        return
+
+    instrument_return = calculate_period_return(instrument_prices)
+    benchmark_return = calculate_period_return(benchmark_prices)
+    relative_performance = calculate_relative_performance(
+        instrument_return, benchmark_return
+    )
+
+    instrument_base = calculate_base_100(instrument_prices)
+    benchmark_base = calculate_base_100(benchmark_prices)
+
     print("=== MarketPulse ===")
     print()
     print("Market configuration")
@@ -83,6 +119,22 @@ def main():
     print()
     print("Benchmark index")
     display_market_summary(benchmark, benchmark_prices, show_currency=False)
+
+    print()
+    print("Period returns")
+    print(f"{instrument['ticker']}: {instrument_return:+.2f}%")
+    print(f"{benchmark['ticker']}: {benchmark_return:+.2f}%")
+
+    print()
+    print("Relative performance")
+    print(f"{instrument['ticker']} vs {benchmark['ticker']}: "
+          f"{relative_performance:+.2f} percentage points")
+
+    print()
+    print("Base 100")
+    for series in (instrument_base, benchmark_base):
+        print(f"{series[0]['ticker']}: "
+              f"{series[0]['value']:.2f} -> {series[-1]['value']:.2f}")
 
 
 if __name__ == "__main__":
