@@ -1,14 +1,13 @@
 from pathlib import Path
 import csv
 import json
-from providers.yahoo_provider import fetch_yahoo_prices
+from providers.bloomberg_provider import fetch_bloomberg_prices
 from analytics import (
     align_series,
     calculate_base_100,
     calculate_period_return,
     calculate_relative_performance,
 )
-from providers.yahoo_provider import fetch_yahoo_prices
 
 DATA_DIR = Path("data/sample")
 
@@ -17,11 +16,8 @@ DATA_DIR = Path("data/sample")
 # Parsing YAML is optional and is not required by the 18-hour lab sequence.
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
-PROVIDER_LABEL = "Yahoo Finance via yfinance"
-YAHOO_SYMBOLS = {
-    "AAPL": "AAPL",
-    "SP500": "^GSPC",
-}
+PROVIDER_LABEL = "Bloomberg stage"
+ACCESS_MODE = "APPROVED_SAMPLE"
 
 
 
@@ -85,33 +81,21 @@ def display_market_summary(asset, prices, show_currency=True):
     print(f"Last close   : {last_close:.2f}{unit}")
 
 
-def main():
+def build_market_snapshot():
     instruments = load_instruments()
 
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices = fetch_yahoo_prices(
-        symbol=YAHOO_SYMBOLS["AAPL"],
-        canonical_ticker="AAPL",
-        period="1mo",
-        interval="1d",
-    )
-
-    benchmark_prices = fetch_yahoo_prices(
-        symbol=YAHOO_SYMBOLS["SP500"],
-        canonical_ticker="SP500",
-        period="1mo",
-        interval="1d",
-    )
+    instrument_prices = fetch_bloomberg_prices(instrument["ticker"])
+    benchmark_prices = fetch_bloomberg_prices(benchmark["ticker"])
 
     instrument_prices, benchmark_prices = align_series(
         instrument_prices,
         benchmark_prices,
     )
     if not instrument_prices:
-        print("No common dates for the instrument and benchmark.")
-        return
+        raise ValueError("No common dates for the instrument and benchmark.")
 
     instrument_return = calculate_period_return(instrument_prices)
     benchmark_return = calculate_period_return(benchmark_prices)
@@ -120,12 +104,48 @@ def main():
         instrument_return,
         benchmark_return,
     )
+
+    return {
+        "provider": f"{PROVIDER_LABEL} - {ACCESS_MODE}",
+        "access_mode": ACCESS_MODE,
+        "lookback": LOOKBACK_LABEL,
+        "interval": INTERVAL_LABEL,
+        "instrument": instrument,
+        "benchmark": benchmark,
+        "instrument_prices": instrument_prices,
+        "benchmark_prices": benchmark_prices,
+        "instrument_return": instrument_return,
+        "benchmark_return": benchmark_return,
+        "relative_performance": relative_performance,
+        "instrument_base_100": calculate_base_100(instrument_prices),
+        "benchmark_base_100": calculate_base_100(benchmark_prices),
+    }
+
+
+def main():
+    try:
+        snapshot = build_market_snapshot()
+    except ValueError as error:
+        print(error)
+        return
+
+    instrument = snapshot["instrument"]
+    benchmark = snapshot["benchmark"]
+    instrument_prices = snapshot["instrument_prices"]
+    benchmark_prices = snapshot["benchmark_prices"]
+    instrument_return = snapshot["instrument_return"]
+    benchmark_return = snapshot["benchmark_return"]
+    relative_performance = snapshot["relative_performance"]
+    instrument_base_100 = snapshot["instrument_base_100"]
+    benchmark_base_100 = snapshot["benchmark_base_100"]
+
     print("=== MarketPulse ===")
     print()
     print("Market configuration")
-    print(f"Period   : {LOOKBACK_LABEL}")
-    print(f"Interval : {INTERVAL_LABEL}")
-    print(f"Provider : {PROVIDER_LABEL}")
+    print(f"Period   : {snapshot['lookback']}")
+    print(f"Interval : {snapshot['interval']}")
+    print(f"Provider : {snapshot['provider']}")
+    print(f"Access mode : {snapshot['access_mode']}")
     print()
     print("Instrument")
     display_market_summary(instrument, instrument_prices)
@@ -141,9 +161,6 @@ def main():
     print()
     print("Relative performance")
     print(f"{relative_performance:+.2f} percentage points")
-
-    instrument_base_100 = calculate_base_100(instrument_prices)
-    benchmark_base_100 = calculate_base_100(benchmark_prices)
 
     print()
     print("Base 100")
