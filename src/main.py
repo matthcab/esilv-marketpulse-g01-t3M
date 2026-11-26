@@ -1,14 +1,14 @@
 from pathlib import Path
 import csv
 import json
-from providers.yahoo_provider import fetch_yahoo_prices
+
 from analytics import (
     align_series,
     calculate_base_100,
     calculate_period_return,
     calculate_relative_performance,
 )
-from providers.yahoo_provider import fetch_yahoo_prices
+from providers.bloomberg_provider import ACCESS_MODE, fetch_bloomberg_prices
 
 DATA_DIR = Path("data/sample")
 
@@ -17,12 +17,7 @@ DATA_DIR = Path("data/sample")
 # Parsing YAML is optional and is not required by the 18-hour lab sequence.
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
-PROVIDER_LABEL = "Yahoo Finance via yfinance"
-YAHOO_SYMBOLS = {
-    "AAPL": "AAPL",
-    "SP500": "^GSPC",
-}
-
+PROVIDER_LABEL = "Bloomberg stage"
 
 
 def load_instruments():
@@ -50,14 +45,14 @@ def load_prices():
 def filter_prices(prices, ticker):
     return [row for row in prices if row["ticker"] == ticker]
 
+
 def get_first_close(prices):
-    first_row = prices[0]
-    return float(first_row["close"])
+    return float(prices[0]["close"])
 
 
 def get_last_close(prices):
-    last_row = prices[-1]
-    return float(last_row["close"])
+    return float(prices[-1]["close"])
+
 
 def get_first_date(prices):
     return prices[0]["date"]
@@ -65,6 +60,47 @@ def get_first_date(prices):
 
 def get_last_date(prices):
     return prices[-1]["date"]
+
+
+def build_market_snapshot():
+    """Shared application result for the terminal (TD10) and dashboard (TD11)."""
+    instruments = load_instruments()
+    instrument = instruments["instrument"]
+    benchmark = instruments["benchmark"]
+
+    instrument_prices = fetch_bloomberg_prices(instrument["ticker"])
+    benchmark_prices = fetch_bloomberg_prices(benchmark["ticker"])
+
+    aligned_instrument, aligned_benchmark = align_series(
+        instrument_prices,
+        benchmark_prices,
+    )
+
+    if not aligned_instrument:
+        raise ValueError("No common dates for the instrument and benchmark.")
+
+    instrument_return = calculate_period_return(aligned_instrument)
+    benchmark_return = calculate_period_return(aligned_benchmark)
+
+    return {
+        "provider": PROVIDER_LABEL,
+        "access_mode": ACCESS_MODE,
+        "lookback": LOOKBACK_LABEL,
+        "interval": INTERVAL_LABEL,
+        "instrument": instrument,
+        "benchmark": benchmark,
+        "instrument_prices": aligned_instrument,
+        "benchmark_prices": aligned_benchmark,
+        "instrument_return": instrument_return,
+        "benchmark_return": benchmark_return,
+        "relative_performance": calculate_relative_performance(
+            instrument_return,
+            benchmark_return,
+        ),
+        "instrument_base_100": calculate_base_100(aligned_instrument),
+        "benchmark_base_100": calculate_base_100(aligned_benchmark),
+    }
+
 
 def display_market_summary(asset, prices, show_currency=True):
     first_close = get_first_close(prices)
@@ -86,78 +122,51 @@ def display_market_summary(asset, prices, show_currency=True):
 
 
 def main():
-    instruments = load_instruments()
+    snapshot = build_market_snapshot()
+    instrument = snapshot["instrument"]
+    benchmark = snapshot["benchmark"]
 
-    instrument = instruments["instrument"]
-    benchmark = instruments["benchmark"]
-
-    instrument_prices = fetch_yahoo_prices(
-        symbol=YAHOO_SYMBOLS["AAPL"],
-        canonical_ticker="AAPL",
-        period="1mo",
-        interval="1d",
-    )
-
-    benchmark_prices = fetch_yahoo_prices(
-        symbol=YAHOO_SYMBOLS["SP500"],
-        canonical_ticker="SP500",
-        period="1mo",
-        interval="1d",
-    )
-
-    instrument_prices, benchmark_prices = align_series(
-        instrument_prices,
-        benchmark_prices,
-    )
-    if not instrument_prices:
-        print("No common dates for the instrument and benchmark.")
-        return
-
-    instrument_return = calculate_period_return(instrument_prices)
-    benchmark_return = calculate_period_return(benchmark_prices)
-
-    relative_performance = calculate_relative_performance(
-        instrument_return,
-        benchmark_return,
-    )
     print("=== MarketPulse ===")
     print()
     print("Market configuration")
-    print(f"Period   : {LOOKBACK_LABEL}")
-    print(f"Interval : {INTERVAL_LABEL}")
-    print(f"Provider : {PROVIDER_LABEL}")
+    print(f"Provider    : {snapshot['provider']}")
+    print(f"Access mode : {snapshot['access_mode']}")
+    print(f"Period      : {snapshot['lookback']}")
+    print(f"Interval    : {snapshot['interval']}")
     print()
     print("Instrument")
-    display_market_summary(instrument, instrument_prices)
+    display_market_summary(instrument, snapshot["instrument_prices"])
     print()
     print("Benchmark index")
-    display_market_summary(benchmark, benchmark_prices, show_currency=False)
+    display_market_summary(
+        benchmark,
+        snapshot["benchmark_prices"],
+        show_currency=False,
+    )
 
     print()
     print("Period returns")
-    print(f"{instrument['ticker']} : {instrument_return:+.2f}%")
-    print(f"{benchmark['ticker']} : {benchmark_return:+.2f}%")
+    print(f"{instrument['ticker']} : {snapshot['instrument_return']:+.2f}%")
+    print(f"{benchmark['ticker']} : {snapshot['benchmark_return']:+.2f}%")
 
     print()
     print("Relative performance")
-    print(f"{relative_performance:+.2f} percentage points")
-
-    instrument_base_100 = calculate_base_100(instrument_prices)
-    benchmark_base_100 = calculate_base_100(benchmark_prices)
+    print(
+        f"{instrument['ticker']} vs {benchmark['ticker']} : "
+        f"{snapshot['relative_performance']:+.2f} percentage points"
+    )
 
     print()
     print("Base 100")
-
     print(
         f"{instrument['ticker']} : "
-        f"{instrument_base_100[0]['value']:.2f} -> "
-        f"{instrument_base_100[-1]['value']:.2f}"
+        f"{snapshot['instrument_base_100'][0]['value']:.2f} -> "
+        f"{snapshot['instrument_base_100'][-1]['value']:.2f}"
     )
-
     print(
         f"{benchmark['ticker']} : "
-        f"{benchmark_base_100[0]['value']:.2f} -> "
-        f"{benchmark_base_100[-1]['value']:.2f}"
+        f"{snapshot['benchmark_base_100'][0]['value']:.2f} -> "
+        f"{snapshot['benchmark_base_100'][-1]['value']:.2f}"
     )
 
 
