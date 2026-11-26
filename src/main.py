@@ -2,6 +2,12 @@ from pathlib import Path
 import csv
 import json
 
+from analytics import (
+    align_series,
+    calculate_base_100,
+    calculate_period_return,
+    calculate_relative_performance,
+)
 
 DATA_DIR = Path("data/sample")
 
@@ -11,6 +17,17 @@ DATA_DIR = Path("data/sample")
 LOOKBACK_LABEL = "1 month"
 INTERVAL_LABEL = "Daily"
 PROVIDER_LABEL = "CSV"
+
+def normalize_price_row(row):
+    return {
+        "date": row["date"],
+        "ticker": row["ticker"],
+        "open": float(row["open"]),
+        "high": float(row["high"]),
+        "low": float(row["low"]),
+        "close": float(row["close"]),
+        "volume": int(row["volume"]),
+    }
 
 
 def load_instruments():
@@ -64,6 +81,8 @@ def display_market_summary(asset, prices, show_currency=True):
 def main():
     instruments = load_instruments()
     prices = load_prices()
+    prices = [normalize_price_row(row) for row in prices]
+ 
     
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
@@ -71,6 +90,18 @@ def main():
     instrument_prices = filter_prices(prices, instrument["ticker"])
     benchmark_prices = filter_prices(prices, benchmark["ticker"])
 
+    instrument_prices, benchmark_prices = align_series(
+        instrument_prices,
+        benchmark_prices,
+    )
+
+    instrument_return = calculate_period_return(instrument_prices)
+    benchmark_return = calculate_period_return(benchmark_prices)
+
+    relative_performance = calculate_relative_performance(
+        instrument_return,
+        benchmark_return,
+    )
     print("=== MarketPulse ===")
     print()
     print("Market configuration")
@@ -83,6 +114,33 @@ def main():
     print()
     print("Benchmark index")
     display_market_summary(benchmark, benchmark_prices, show_currency=False)
+
+    print()
+    print("Period returns")
+    print(f"{instrument['ticker']} : {instrument_return:+.2f}%")
+    print(f"{benchmark['ticker']} : {benchmark_return:+.2f}%")
+
+    print()
+    print("Relative performance")
+    print(f"{relative_performance:+.2f} percentage points")
+
+    instrument_base_100 = calculate_base_100(instrument_prices)
+    benchmark_base_100 = calculate_base_100(benchmark_prices)
+
+    print()
+    print("Base 100")
+
+    print(
+        f"{instrument['ticker']} : "
+        f"{instrument_base_100[0]['value']:.2f} -> "
+        f"{instrument_base_100[-1]['value']:.2f}"
+    )
+
+    print(
+        f"{benchmark['ticker']} : "
+        f"{benchmark_base_100[0]['value']:.2f} -> "
+        f"{benchmark_base_100[-1]['value']:.2f}"
+    )
 
 
 if __name__ == "__main__":
