@@ -35,9 +35,21 @@ def load_instruments():
         return json.load(file)
 
 
+def normalize_price_row(row):
+    return {
+        "date": row["date"],
+        "ticker": row["ticker"],
+        "open": float(row["open"]),
+        "high": float(row["high"]),
+        "low": float(row["low"]),
+        "close": float(row["close"]),
+        "volume": int(row["volume"]),
+    }
+
+
 def load_prices():
     with open(DATA_DIR / "prices.csv", encoding="utf-8") as file:
-        return list(csv.DictReader(file))
+        return [normalize_price_row(row) for row in csv.DictReader(file)]
 
 
 def filter_prices(prices, ticker):
