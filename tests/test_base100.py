@@ -14,3 +14,4 @@ def test_calculate_base_100():
     assert len(result) == 2
     assert result[0]["value"] == pytest.approx(100.0)
     assert result[1]["value"] == pytest.approx(110.0)
+    
