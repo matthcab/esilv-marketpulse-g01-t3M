@@ -60,4 +60,5 @@ src/
 
 - Bloomberg mapping: `docs/BLOOMBERG_FIELD_MAPPING.md`
 - Checkpoint evidence: `evidence/checkpoint-a/`, `evidence/checkpoint-b/`, `evidence/checkpoint-c/`
+- TP reports: `rendu_TP/<student>/`
 - Team: `Team.md`

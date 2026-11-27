@@ -19,3 +19,6 @@ venv/
 # Generated data
 data/raw/
 data/processed/
+
+# Office temporary lock files
+~$*
