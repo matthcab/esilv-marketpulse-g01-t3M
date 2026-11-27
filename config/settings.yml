@@ -6,7 +6,7 @@ app:
   name: MarketPulse
 
 market:
-  provider: csv
+  provider: bloomberg_approved_sample
   lookback: 1mo
   interval: 1d
 
@@ -19,4 +19,4 @@ market:
     name: S&P 500
 
 data:
-  file: data/sample/prices.csv
+  file: data/sample/bloomberg_reference_sample.json
