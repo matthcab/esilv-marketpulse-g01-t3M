@@ -1,6 +1,6 @@
-from pathlib import Path
 import csv
 import json
+from pathlib import Path
 
 from analytics import (
     align_series,
@@ -9,7 +9,6 @@ from analytics import (
     calculate_relative_performance,
 )
 from providers.bloomberg_provider import ACCESS_MODE, fetch_bloomberg_prices
-
 
 DATA_DIR = Path("data/sample")
 

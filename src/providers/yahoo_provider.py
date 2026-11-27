@@ -14,21 +14,21 @@ def fetch_yahoo_prices(
     )
 
     if history.empty:
-        raise ValueError(
-            f"No Yahoo Finance data returned for {symbol}"
-        )
+        raise ValueError(f"No Yahoo Finance data returned for {symbol}")
 
     rows = []
 
     for timestamp, row in history.iterrows():
-        rows.append({
-            "date": timestamp.strftime("%Y-%m-%d"),
-            "ticker": canonical_ticker,
-            "open": float(row["Open"]),
-            "high": float(row["High"]),
-            "low": float(row["Low"]),
-            "close": float(row["Close"]),
-            "volume": int(row["Volume"]),
-        })
+        rows.append(
+            {
+                "date": timestamp.strftime("%Y-%m-%d"),
+                "ticker": canonical_ticker,
+                "open": float(row["Open"]),
+                "high": float(row["High"]),
+                "low": float(row["Low"]),
+                "close": float(row["Close"]),
+                "volume": int(row["Volume"]),
+            }
+        )
 
     return rows
