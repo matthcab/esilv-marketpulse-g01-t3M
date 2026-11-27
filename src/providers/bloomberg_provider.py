@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 ACCESS_MODE = "APPROVED_SAMPLE"
 SAMPLE_PATH = Path("data/sample/bloomberg_reference_sample.json")
 
@@ -33,15 +32,17 @@ def normalize_bloomberg_history(series, canonical_ticker):
     rows = []
 
     for observation in series["observations"]:
-        rows.append({
-            "date": observation["observation_date"],
-            "ticker": canonical_ticker,
-            "open": float(observation["open_value"]),
-            "high": float(observation["high_value"]),
-            "low": float(observation["low_value"]),
-            "close": float(observation["close_value"]),
-            "volume": int(observation["volume_value"]),
-        })
+        rows.append(
+            {
+                "date": observation["observation_date"],
+                "ticker": canonical_ticker,
+                "open": float(observation["open_value"]),
+                "high": float(observation["high_value"]),
+                "low": float(observation["low_value"]),
+                "close": float(observation["close_value"]),
+                "volume": int(observation["volume_value"]),
+            }
+        )
 
     return rows
 
